@@ -8,4 +8,5 @@ pytest-cov
 scikit-learn==0.23.*
 scikit-posthocs
 statsmodels>=0.12.*
+stumpy>=1.5.*
 tsfresh
