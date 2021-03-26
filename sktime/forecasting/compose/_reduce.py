@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = "Markus Löning"
+__author__ = ["Markus Löning"]
 __all__ = [
     "ReducedTabularRegressorMixin",
     "ReducedTimeSeriesRegressorMixin",
@@ -28,8 +28,131 @@ from sktime.utils.validation.forecasting import check_step_length
 from sktime.utils.validation.forecasting import check_y
 
 
-##############################################################################
-# base classes for reduction from forecasting to regression
+def _sliding_window_transform_tabular(z, window_length, fh):
+    """Transform time series data `z` with shape (n_timepoints, n_variables) into
+    a 2d tabular array via a sliding window of fixed length `window_length`.
+
+    Returns
+    -------
+    yt : np.ndarray, shape = (n_timepoints - window_length, 1)
+        Transformed target variable.
+    Xt : np.ndarray, shape = (n_timepoints - window_length, (n_variables *
+        window_length) + n_variables - 1)
+        Transformed lagged values of target variable and exogenous variables,
+        including contemporaneous values of exogenous variables.
+
+    References
+    ----------
+    https://www.statsmodels.org/stable/generated/statsmodels.tsa.tsatools.lagmat2ds.html
+    """
+    # There are different ways to implement this transform. Pre-allocating an
+    # array and filling it by iterating over the window length tends to be the most
+    # efficient.
+    n_timepoints, n_variables = z.shape
+    fh_max = fh[-1]
+
+    # Update window length.
+    window_length = window_length + fh_max
+
+    # Preallocate array.
+    n_rows = n_timepoints + window_length
+    n_columns = n_variables * (window_length + 1)
+    Zt = np.empty((n_rows, n_columns))
+
+    # Transform data.
+    for k in range(window_length + 1):
+        a = window_length - k
+        b = n_timepoints + window_length - k
+        c = n_variables * (window_length - k)
+        d = n_variables * (window_length - k + 1)
+        Zt[a:b, c:d] = z
+
+    # Truncate data to only return full windows.
+    Zt = Zt[window_length:-window_length]
+
+    # Return transformed feature and target variables separately. This includes
+    # contemporaneous values of the exogenous variables.
+    yi = fh[::-1] * n_variables
+    yt = Zt[:, yi]
+
+    xi = (window_length - fh_max) * n_variables + (n_variables - 1)
+    Xt = Zt[:, -xi:]
+    return yt, Xt
+
+
+def _sliding_window_transform_panel(z, window_length, fh):
+    """Transform time series data `z` with shape (n_timepoints, n_variables) into
+    a 3d panel array via a sliding window of fixed length `window_length`.
+
+    Returns
+    -------
+    yt : np.ndarray, shape = (n_timepoints - window_length, 1)
+        Transformed target variable.
+    Xt : np.ndarray, shape = (n_timepoints - window_length, n_variables, window_length)
+        Transformed lagged values of target variable and exogenous variables,
+        excluding contemporaneous values of exogenous variables.
+    """
+    # There are different ways to implement this transform. Pre-allocating an
+    # array and filling it by iterating over the window length tends to be the most
+    # efficient.
+    n_timepoints, n_variables = z.shape
+    fh_max = fh[-1]
+
+    # Update window length.
+    window_length = window_length + fh_max
+
+    # Preallocate array.
+    Zt = np.zeros((n_timepoints + window_length, n_variables, window_length + 1))
+
+    # Transform data.
+    for k in range(window_length + 1):
+        a = window_length - k
+        b = n_timepoints + window_length - k
+        Zt[a:b, :, a] = z
+
+    # Truncate data to only return full windows.
+    Zt = Zt[window_length:-window_length]
+
+    # Return transformed feature and target variables separately. This excludes
+    # contemporaneous values of the exogenous variables. Including them would lead to
+    # unequal-length data, with more time points for exogenous series
+    # than the target series, with is currently not supported.
+    yt = Zt[:, 0, fh[::-1]]
+
+    X_start = fh_max + 1
+    Xt = Zt[:, :, X_start:]
+    return yt, Xt
+
+
+def _prepare_y_X(y, X):
+    z = y.to_numpy()
+    if z.ndim == 1:
+        z = z.reshape(-1, 1)
+    if X is not None:
+        z = np.column_stack([z, X.to_numpy()])
+    return z
+
+
+def _prepare_fh(fh):
+    assert fh.is_relative
+    assert fh.is_all_out_of_sample()
+    return fh.to_indexer().to_numpy()
+
+
+def _sliding_window_transform(y, window_length, fh, X=None, return_panel=False):
+    z = _prepare_y_X(y, X)
+    fh = _prepare_fh(fh)
+    window_length = check_window_length(window_length)
+
+    if window_length + fh.max() >= z.shape[0]:
+        raise ValueError(
+            "The `window_length` and `fh` are incompatible with the " "length " "of `y`"
+        )
+
+    if return_panel:
+        return _sliding_window_transform_panel(z, window_length, fh)
+    else:
+        return _sliding_window_transform_tabular(z, window_length, fh)
 
 
 class BaseReducer(_BaseWindowForecaster):
