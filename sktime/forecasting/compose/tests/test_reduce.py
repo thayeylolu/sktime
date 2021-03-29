@@ -109,6 +109,44 @@ def test_sliding_window_tranform_panel(n_timepoints, window_length, n_variables,
     assert np.all(Xt < yt[:, np.newaxis, [0]])
 
 
+def _make_y(start, end, method="linear-trend", slope=1):
+    # generate test data
+    if method == "linear-trend":
+        y = np.arange(start, end) * slope
+    else:
+        raise ValueError("`method` not understood")
+    return y
+
+
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
+@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
+@pytest.mark.parametrize("strategy", ["recursive", "direct", "multioutput"])
+@pytest.mark.parametrize(
+    "method, slope",
+    [
+        ("linear-trend", 1),
+        ("linear-trend", -3),
+        ("linear-trend", 0),  # constant
+    ],
+)
+def test_tabular_linear_extrapolation(fh, window_length, strategy, method, slope):
+    n_timepoints = 13
+    y = _make_y(0, n_timepoints, method=method, slope=slope)
+    y = pd.Series(y)
+    fh = check_fh(fh)
+
+    regressor = LinearRegression()
+    forecaster = ReducedForecaster(
+        regressor, "regressor", window_length=window_length, strategy=strategy
+    )
+    forecaster.fit(y, fh=fh)
+    actual = forecaster.predict()
+
+    end = n_timepoints + max(fh) + 1
+    expected = _make_y(n_timepoints, end, method=method, slope=slope)[fh.to_indexer()]
+    np.testing.assert_almost_equal(actual, expected)
+
+
 def test_factory_method_recursive():
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y, test_size=24)

@@ -431,11 +431,7 @@ class _MultioutputReducer(_RequiredForecastingHorizonMixin, BaseReducer):
         X_last = self._format_windows([last_window])
 
         y_pred = self.regressor_.predict(X_last)
-
-        # preallocate array for forecasted values
-        # y_pred = np.zeros(len(fh))
-
-        return y_pred[0]
+        return y_pred.ravel()
 
     def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=None):
         raise NotImplementedError("in-sample predictions are not implemented")
