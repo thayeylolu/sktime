@@ -31,7 +31,7 @@ This implementation deviates from the original in minor ways. It samples interva
  #uschange : y - consumption is the target variable (consumption = load_uschange()[0])
  X = load_uschange()[1].to_numpy()
  #transforming X to a univariate data
- 
+
  X = np.reshape(X,(187,1,4))
  y = load_uschange()[0].to_numpy()
  X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.25)
@@ -41,21 +41,21 @@ This implementation deviates from the original in minor ways. It samples interva
   ("regressor", DecisionTreeRegressor()),
  ]
  time_series_pipeline = Pipeline(pipes)
- 
+
  #Time Series Forest Regressor
  tsfr = TimeSeriesForestRegressor(
-     estimator=time_series_pipeline, 
+     estimator=time_series_pipeline,
      n_estimators=100,
      bootstrap=True,
      random_state=1,
      n_jobs=-1,
- ) 
+ )
  tsfr.fit(X_train, y_train)
  y_pred = tsf.predict(X_test)
- 
+
  #Model Evaluation
  r2_score(y_test,y_pred)
- 
+
 .. code-block:: output
 
 output : 0.4193283712646667

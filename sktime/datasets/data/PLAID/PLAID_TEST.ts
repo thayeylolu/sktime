@@ -2,9 +2,9 @@
 #
 #PLAID stands for the Plug Load Appliance Identification Dataset. The data are intended for load identification research. The first version of PLAID is named PLAID1, collected in summer 2013. A second version of PLAID was collected in winter 2014 and released under the name PLAID2.
 #
-#This dataset comes from PLAID1. It includes current and voltage measurements sampled at 30 kHz from 11 different appliance types present in more than 56 households in Pittsburgh, Pennsylvania, USA. Data collection took place during the summer of 2013. Each appliance type is represented by dozens of different instances of varying makes/models. 
+#This dataset comes from PLAID1. It includes current and voltage measurements sampled at 30 kHz from 11 different appliance types present in more than 56 households in Pittsburgh, Pennsylvania, USA. Data collection took place during the summer of 2013. Each appliance type is represented by dozens of different instances of varying makes/models.
 #
-#For each appliance, three to six measurements were collected for each state transition. These measurements were then post-processed to extract a few-second-long window containing both the steady-state operation and the startup transient )when available). 
+#For each appliance, three to six measurements were collected for each state transition. These measurements were then post-processed to extract a few-second-long window containing both the steady-state operation and the startup transient )when available).
 #
 #The classes correspond to 11 different appliance types: air conditioner, compact flourescent lamp, fridge, hairdryer, laptop, microwave, washing machine, bulb, vacuum, fan, heater.
 #

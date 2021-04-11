@@ -14,4 +14,3 @@ steps:
         "$(IMAGE)" \
         /io/build_tools/azure/build_wheels.sh
     displayName: 'Build and test wheels'
-
