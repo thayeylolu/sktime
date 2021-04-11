@@ -4,7 +4,7 @@ Time Series Regression
 ======================
 .. note::
 
-    Before we dive into Time Series Regression, we would explain how crossectional data are different from time-series data. Crossectional data are observed at a fixed point in time. This means that no time sequence occurred. The collection of numbers of students in every classroom of a school is an example of crossectional data. If this data is observed at time intervals, for instance, the collection of the number of students in every classroom of a school daily, this kind of data is called a time series data.
+    Before we dive into Time Series Regression, we would explain how crossectional data are different from time-series data. Crossectional data are observed at a fixed point in time. This means that no time sequence occurred. The collection of numbers of students in every classroom of a school is an example of crossectional data. If this data is observed at time intervals, for instance, the collection of the number of students in every classroom of a school daily, this kind of data is called a time-series data.
 
 
 
